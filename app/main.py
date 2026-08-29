@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import AsyncMongoClient
 
 from app.core.config import settings
 from app.core.database import init_db
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     # Startup: Initialize MongoDB and Beanie
     logger.info("Initializing MongoDB and Beanie ODM...")
-    client: AsyncIOMotorClient = AsyncIOMotorClient(settings.MONGODB_URL)
+    client: AsyncMongoClient = AsyncMongoClient(settings.MONGODB_URL)
     await init_db(client)
     app.state.db_client = client
     logger.info("Application startup completed.")

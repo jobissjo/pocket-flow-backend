@@ -1,6 +1,6 @@
 import logging
 from beanie import init_beanie
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import AsyncMongoClient
 
 from app.core.config import settings
 from app.models.user import User
@@ -52,10 +52,10 @@ async def seed_system_categories() -> None:
         logger.error(f"Error seeding system categories: {e}")
 
 
-async def init_db(client: AsyncIOMotorClient = None) -> AsyncIOMotorClient:
+async def init_db(client: AsyncMongoClient = None) -> AsyncMongoClient:
     """Initialize MongoDB connection and Beanie ODM."""
     if client is None:
-        client = AsyncIOMotorClient(settings.MONGODB_URL)
+        client = AsyncMongoClient(settings.MONGODB_URL)
 
     database = client[settings.DATABASE_NAME]
 
