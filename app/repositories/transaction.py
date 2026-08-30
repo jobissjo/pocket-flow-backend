@@ -109,8 +109,7 @@ class TransactionRepository(BaseRepository[Transaction]):
             },
         ]
 
-        cursor = Transaction.get_pymongo_collection().aggregate(pipeline)
-        result = await cursor.to_list(length=None)
+        result = await Transaction.aggregate(pipeline).to_list()
         totals = {"income": 0.0, "expense": 0.0}
         for item in result:
             if item["_id"] in totals:
@@ -148,8 +147,7 @@ class TransactionRepository(BaseRepository[Transaction]):
             {"$sort": {"_id.period": 1}},
         ]
 
-        cursor = Transaction.get_pymongo_collection().aggregate(pipeline)
-        raw_results = await cursor.to_list(length=None)
+        raw_results = await Transaction.aggregate(pipeline).to_list()
         
         # Merge by period
         periods_data: Dict[str, Dict[str, float]] = {}
@@ -204,8 +202,7 @@ class TransactionRepository(BaseRepository[Transaction]):
             {"$sort": {"total": -1}},
         ]
 
-        cursor = Transaction.get_pymongo_collection().aggregate(pipeline)
-        return await cursor.to_list(length=None)
+        return await Transaction.aggregate(pipeline).to_list()
 
 
 transaction_repo = TransactionRepository()
