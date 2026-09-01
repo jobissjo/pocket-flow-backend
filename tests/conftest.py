@@ -6,6 +6,8 @@ from beanie import init_beanie
 from mongomock.database import Database
 from mongomock_motor import AsyncMongoMockClient
 
+from mongomock_motor import AsyncMongoMockCollection
+
 # Patch mongomock.database.Database.list_collection_names for newer Beanie/PyMongo kwargs
 _orig_list_collection_names = Database.list_collection_names
 
@@ -16,12 +18,21 @@ def _patched_list_collection_names(self, *args, **kwargs):
 
 Database.list_collection_names = _patched_list_collection_names
 
+_orig_aggregate = AsyncMongoMockCollection.aggregate
+
+async def _patched_aggregate(self, *args, **kwargs):
+    res = _orig_aggregate(self, *args, **kwargs)
+    return res
+
+AsyncMongoMockCollection.aggregate = _patched_aggregate
+
 from app.core.database import DEFAULT_SYSTEM_CATEGORIES
 from app.models.account import Account
 from app.models.category import Category
 from app.models.credit_card import CreditCard
 from app.models.emi import EMI
 from app.models.transaction import Transaction
+from app.models.transaction_import import TransactionImport
 from app.models.user import User
 from app.main import app
 
@@ -49,6 +60,7 @@ async def init_mock_db():
             Category,
             Transaction,
             EMI,
+            TransactionImport,
         ],
     )
 
@@ -65,6 +77,7 @@ async def init_mock_db():
     await Category.delete_all()
     await Transaction.delete_all()
     await EMI.delete_all()
+    await TransactionImport.delete_all()
 
 
 @pytest_asyncio.fixture(scope="function")

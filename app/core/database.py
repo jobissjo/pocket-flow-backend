@@ -9,6 +9,7 @@ from app.models.credit_card import CreditCard
 from app.models.category import Category, CategoryType
 from app.models.transaction import Transaction
 from app.models.emi import EMI
+from app.models.transaction_import import TransactionImport
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,7 @@ async def init_db(client: AsyncMongoClient = None) -> AsyncMongoClient:
             Category,
             Transaction,
             EMI,
+            TransactionImport,
         ],
     )
     logger.info(f"Connected to MongoDB database: '{settings.DATABASE_NAME}' and initialized Beanie.")

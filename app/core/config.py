@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     # OTP Verification
     OTP_EXPIRE_MINUTES: int = 10
 
+    # AI & Transaction Import Settings
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-3.1-flash-lite"
+    MAX_UPLOAD_IMAGE_SIZE_MB: int = 10
+    UPLOAD_DIR: str = "uploads/transaction_imports"
+
     # CORS
     CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://localhost:5173", "http://localhost:8000"]
 
