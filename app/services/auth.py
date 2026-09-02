@@ -1,8 +1,10 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
-from fastapi import HTTPException, status
+from fastapi import BackgroundTasks, HTTPException, status
 
 from app.core.config import settings
+from app.services.email import email_service
 from app.core.security import (
     create_access_token,
     generate_otp,
@@ -25,7 +27,11 @@ from app.schemas.user import UserResponse
 
 
 class AuthService:
-    async def register(self, data: UserRegisterRequest) -> Dict[str, Any]:
+    async def register(
+        self,
+        data: UserRegisterRequest,
+        background_tasks: Optional[BackgroundTasks] = None,
+    ) -> Dict[str, Any]:
         existing_email = await user_repo.get_by_email(data.email)
         if existing_email:
             raise HTTPException(
@@ -55,6 +61,23 @@ class AuthService:
             otp_expires_at=otp_expiry,
         )
         saved_user = await user_repo.create(new_user)
+
+        # Dispatch async email sending
+        if background_tasks:
+            background_tasks.add_task(
+                email_service.send_registration_otp_email,
+                to_email=saved_user.email,
+                full_name=saved_user.full_name,
+                otp=otp,
+            )
+        else:
+            asyncio.create_task(
+                email_service.send_registration_otp_email(
+                    to_email=saved_user.email,
+                    full_name=saved_user.full_name,
+                    otp=otp,
+                )
+            )
 
         return {
             "message": "Registration successful. Please verify the OTP sent to your email.",
@@ -127,7 +150,11 @@ class AuthService:
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )
 
-    async def resend_otp(self, email: str) -> Dict[str, Any]:
+    async def resend_otp(
+        self,
+        email: str,
+        background_tasks: Optional[BackgroundTasks] = None,
+    ) -> Dict[str, Any]:
         user = await user_repo.get_by_email(email)
         if not user:
             raise HTTPException(
@@ -141,12 +168,32 @@ class AuthService:
         user.updated_at = utc_now()
         await user_repo.save(user)
 
+        if background_tasks:
+            background_tasks.add_task(
+                email_service.send_resend_otp_email,
+                to_email=user.email,
+                full_name=user.full_name,
+                otp=otp,
+            )
+        else:
+            asyncio.create_task(
+                email_service.send_resend_otp_email(
+                    to_email=user.email,
+                    full_name=user.full_name,
+                    otp=otp,
+                )
+            )
+
         return {
             "message": "A new OTP has been sent.",
             "otp_preview": otp if settings.DEBUG else None,
         }
 
-    async def forgot_password(self, data: ForgotPasswordRequest) -> Dict[str, Any]:
+    async def forgot_password(
+        self,
+        data: ForgotPasswordRequest,
+        background_tasks: Optional[BackgroundTasks] = None,
+    ) -> Dict[str, Any]:
         user = await user_repo.get_by_email(data.email)
         if not user:
             raise HTTPException(
@@ -159,6 +206,22 @@ class AuthService:
         user.otp_expires_at = get_otp_expiry(settings.OTP_EXPIRE_MINUTES)
         user.updated_at = utc_now()
         await user_repo.save(user)
+
+        if background_tasks:
+            background_tasks.add_task(
+                email_service.send_password_reset_otp_email,
+                to_email=user.email,
+                full_name=user.full_name,
+                otp=otp,
+            )
+        else:
+            asyncio.create_task(
+                email_service.send_password_reset_otp_email(
+                    to_email=user.email,
+                    full_name=user.full_name,
+                    otp=otp,
+                )
+            )
 
         return {
             "message": "Password reset OTP has been sent.",

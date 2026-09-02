@@ -6,6 +6,7 @@ from app.services.category import CategoryService, category_service
 from app.services.transaction import TransactionService, transaction_service
 from app.services.emi import EMIService, emi_service
 from app.services.dashboard import DashboardService, dashboard_service
+from app.services.email import EmailService, email_service
 
 __all__ = [
     "AuthService",
@@ -24,4 +25,6 @@ __all__ = [
     "emi_service",
     "DashboardService",
     "dashboard_service",
+    "EmailService",
+    "email_service",
 ]

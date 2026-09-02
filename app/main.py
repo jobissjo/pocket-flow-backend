@@ -30,7 +30,10 @@ async def lifespan(app: FastAPI):
     # Shutdown: Close database connection
     logger.info("Closing MongoDB connection...")
     if hasattr(app.state, "db_client"):
-        app.state.db_client.close()
+        import inspect
+        res = app.state.db_client.close()
+        if inspect.isawaitable(res):
+            await res
     logger.info("Application shutdown complete.")
 
 

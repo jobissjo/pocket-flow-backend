@@ -1,5 +1,5 @@
 from typing import Any, Dict
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 
 from app.core.dependencies import get_current_user
 from app.models.user import User
@@ -26,8 +26,11 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     summary="Register a new user",
     description="Registers a user and sends an initial verification OTP.",
 )
-async def register(data: UserRegisterRequest) -> Dict[str, Any]:
-    return await auth_service.register(data)
+async def register(
+    data: UserRegisterRequest,
+    background_tasks: BackgroundTasks,
+) -> Dict[str, Any]:
+    return await auth_service.register(data, background_tasks=background_tasks)
 
 
 @router.post(
@@ -55,8 +58,11 @@ async def login(data: UserLoginRequest) -> TokenResponse:
     summary="Resend OTP",
     description="Regenerates and resends a verification OTP.",
 )
-async def resend_otp(data: ResendOTPRequest) -> Dict[str, Any]:
-    return await auth_service.resend_otp(data.email)
+async def resend_otp(
+    data: ResendOTPRequest,
+    background_tasks: BackgroundTasks,
+) -> Dict[str, Any]:
+    return await auth_service.resend_otp(data.email, background_tasks=background_tasks)
 
 
 @router.post(
@@ -64,8 +70,11 @@ async def resend_otp(data: ResendOTPRequest) -> Dict[str, Any]:
     summary="Request password reset",
     description="Sends a password reset OTP to the user's email.",
 )
-async def forgot_password(data: ForgotPasswordRequest) -> Dict[str, Any]:
-    return await auth_service.forgot_password(data)
+async def forgot_password(
+    data: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+) -> Dict[str, Any]:
+    return await auth_service.forgot_password(data, background_tasks=background_tasks)
 
 
 @router.post(

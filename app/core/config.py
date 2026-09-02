@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -20,6 +20,17 @@ class Settings(BaseSettings):
 
     # OTP Verification
     OTP_EXPIRE_MINUTES: int = 10
+
+    # SMTP Email Configuration
+    SMTP_ENABLED: bool = False
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+    EMAILS_FROM_EMAIL: Optional[str] = None
+    EMAILS_FROM_NAME: str = "PocketFlow"
 
     # AI & Transaction Import Settings
     GEMINI_API_KEY: str = ""
