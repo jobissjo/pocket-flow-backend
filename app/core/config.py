@@ -38,6 +38,14 @@ class Settings(BaseSettings):
     MAX_UPLOAD_IMAGE_SIZE_MB: int = 10
     UPLOAD_DIR: str = "uploads/transaction_imports"
 
+    # AI Chat & LangChain Settings (Groq & OpenRouter)
+    AI_PROVIDER: str = "groq"  # "groq" or "openrouter"
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_MODEL: str = "meta-llama/llama-3.3-70b-instruct"
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+
     # CORS
     CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://localhost:5173", "http://localhost:8000"]
 
