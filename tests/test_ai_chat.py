@@ -18,11 +18,11 @@ async def test_user(client: AsyncClient, auth_headers: dict) -> User:
 @pytest.mark.asyncio
 async def test_ai_chat_missing_api_key(client: AsyncClient, auth_headers: dict):
     """When API keys are not configured, endpoint returns 400 Bad Request with guidance."""
-    with patch.object(settings, "GROQ_API_KEY", ""):
+    with patch.object(settings, "AI_PROVIDER", "groq"), patch.object(settings, "GROQ_API_KEY", ""):
         response = await client.post(
             "/api/ai/chat",
             headers=auth_headers,
-            json={"message": "Hello, what is my balance?", "provider": "groq"},
+            json={"message": "Hello, what is my balance?"},
         )
         assert response.status_code == 400
         assert "GROQ_API_KEY is not configured" in response.json()["detail"]
@@ -30,13 +30,15 @@ async def test_ai_chat_missing_api_key(client: AsyncClient, auth_headers: dict):
 
 @pytest.mark.asyncio
 async def test_ai_chat_unsupported_provider(client: AsyncClient, auth_headers: dict):
-    """Unsupported provider returns 422 or 400 validation error."""
-    response = await client.post(
-        "/api/ai/chat",
-        headers=auth_headers,
-        json={"message": "Hello", "provider": "unsupported_provider"},
-    )
-    assert response.status_code == 422  # Pydantic Literal validation error
+    """Unsupported provider in server config returns 400."""
+    with patch.object(settings, "AI_PROVIDER", "unsupported_provider"):
+        response = await client.post(
+            "/api/ai/chat",
+            headers=auth_headers,
+            json={"message": "Hello"},
+        )
+        assert response.status_code == 400
+        assert "Unsupported AI provider" in response.json()["detail"]
 
 
 @pytest.mark.asyncio
@@ -61,7 +63,6 @@ async def test_ai_chat_direct_conversation(client: AsyncClient, auth_headers: di
             json={
                 "message": "Hi there!",
                 "history": [],
-                "provider": "groq",
             },
         )
 
@@ -95,7 +96,7 @@ async def test_ai_chat_proactive_clarification(client: AsyncClient, auth_headers
         response = await client.post(
             "/api/ai/chat",
             headers=auth_headers,
-            json={"message": "I spent some money today on groceries", "provider": "groq"},
+            json={"message": "I spent some money today on groceries"},
         )
 
         assert response.status_code == 200
@@ -148,7 +149,6 @@ async def test_ai_chat_tool_calling_execution(
             headers=auth_headers,
             json={
                 "message": "Create a new savings account for HDFC Bank with 25000 balance and account number 9876543210",
-                "provider": "groq",
             },
         )
 
@@ -175,7 +175,7 @@ async def test_ai_chat_tool_calling_execution(
 async def test_ai_chat_openrouter_provider_selection(
     client: AsyncClient, auth_headers: dict
 ):
-    """Test using OpenRouter provider."""
+    """Test using OpenRouter provider configured in settings."""
     mock_llm = MagicMock()
     mock_llm.bind_tools.return_value = mock_llm
     mock_llm.ainvoke = AsyncMock(
@@ -194,8 +194,6 @@ async def test_ai_chat_openrouter_provider_selection(
             headers=auth_headers,
             json={
                 "message": "Give me financial advice",
-                "provider": "openrouter",
-                "model": "anthropic/claude-3.5-sonnet",
             },
         )
 

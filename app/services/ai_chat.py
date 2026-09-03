@@ -112,10 +112,7 @@ You assist the user in managing their personal finances, including bank accounts
         Processes a user chat message with conversation history, performs tool calling
         via LangChain against registered PocketFlow MCP tools, and returns the response.
         """
-        llm, active_provider, active_model = self.get_chat_model(
-            provider=request.provider,
-            model_name=request.model,
-        )
+        llm, active_provider, active_model = self.get_chat_model()
 
         # 1. Prepare system message and history
         messages: List[BaseMessage] = [

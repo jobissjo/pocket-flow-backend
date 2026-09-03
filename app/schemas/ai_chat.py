@@ -13,14 +13,6 @@ class ChatRequest(BaseModel):
         default_factory=list,
         description="Previous conversation turns for context memory",
     )
-    provider: Optional[Literal["groq", "openrouter"]] = Field(
-        None,
-        description="AI provider to use ('groq' or 'openrouter'). Defaults to server configuration.",
-    )
-    model: Optional[str] = Field(
-        None,
-        description="Optional model identifier override (e.g. 'llama-3.3-70b-versatile' for Groq or 'anthropic/claude-3.5-sonnet' for OpenRouter).",
-    )
 
 
 class ToolExecutionRecord(BaseModel):
