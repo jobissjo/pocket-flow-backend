@@ -39,7 +39,7 @@ async def create_transaction(
 )
 async def list_transactions(
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    limit: int = Query(20, ge=1, le=1000, description="Items per page"),
     search: Optional[str] = Query(None, description="Search in title or notes"),
     type: Optional[TransactionType] = Query(None, description="Filter by income or expense"),
     category: Optional[str] = Query(None, description="Filter by Category ID"),

@@ -45,9 +45,16 @@ def event_loop():
     loop.close()
 
 
+from app.core.config import settings
+
+
 @pytest_asyncio.fixture(scope="function", autouse=True)
 async def init_mock_db():
     """Initialize mock MongoDB and Beanie ODM for clean testing."""
+    # Ensure real email sending is disabled during tests to prevent delivery failures
+    orig_smtp = settings.SMTP_ENABLED
+    settings.SMTP_ENABLED = False
+
     client = AsyncMongoMockClient()
     db = client["test_pocket_flow_db"]
     
@@ -78,6 +85,7 @@ async def init_mock_db():
     await Transaction.delete_all()
     await EMI.delete_all()
     await TransactionImport.delete_all()
+    settings.SMTP_ENABLED = orig_smtp
 
 
 @pytest_asyncio.fixture(scope="function")
