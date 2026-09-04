@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     # OTP Verification
     OTP_EXPIRE_MINUTES: int = 10
 
+    # Google OAuth Authentication
+    GOOGLE_CLIENT_ID: Optional[str] = None
+
     # SMTP Email Configuration
     SMTP_ENABLED: bool = False
     SMTP_HOST: str = "smtp.gmail.com"

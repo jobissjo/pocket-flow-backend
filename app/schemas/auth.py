@@ -37,3 +37,8 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int  # in seconds
+
+
+class GoogleLoginRequest(BaseModel):
+    credential: str = Field(..., description="Google ID Token (JWT) from Google Identity Services")
+

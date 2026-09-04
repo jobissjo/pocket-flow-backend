@@ -5,6 +5,7 @@ from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.auth import (
     ForgotPasswordRequest,
+    GoogleLoginRequest,
     ResetPasswordRequest,
     ResendOTPRequest,
     TokenResponse,
@@ -18,6 +19,16 @@ from app.services.auth import auth_service
 from app.services.user import user_service
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+
+@router.post(
+    "/google",
+    response_model=TokenResponse,
+    summary="Sign in or register with Google",
+    description="Validates Google ID Token from Google Identity Services, creates or links account, and returns a JWT access token.",
+)
+async def google_login(data: GoogleLoginRequest) -> TokenResponse:
+    return await auth_service.google_login(data.credential)
 
 
 @router.post(

@@ -3,6 +3,9 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from fastapi import BackgroundTasks, HTTPException, status
 
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
+
 from app.core.config import settings
 from app.services.email import email_service
 from app.core.security import (
@@ -131,7 +134,7 @@ class AuthService:
 
     async def login(self, data: UserLoginRequest) -> TokenResponse:
         user = await user_repo.get_by_email(data.email)
-        if not user or not verify_password(data.password, user.hashed_password):
+        if not user or not user.hashed_password or not verify_password(data.password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect email or password.",
@@ -142,6 +145,85 @@ class AuthService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Account is not activated. Please verify your OTP.",
             )
+
+        token = create_access_token(subject=str(user.id))
+        return TokenResponse(
+            access_token=token,
+            token_type="bearer",
+            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        )
+
+    async def google_login(self, credential: str) -> TokenResponse:
+        """
+        Validates Google ID Token, resolves or provisions user, and issues a JWT token.
+        """
+        try:
+            id_info = id_token.verify_oauth2_token(
+                credential,
+                google_requests.Request(),
+                audience=settings.GOOGLE_CLIENT_ID if settings.GOOGLE_CLIENT_ID else None,
+            )
+        except ValueError as ve:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid Google credential token: {str(ve)}",
+            )
+        except Exception as ex:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to verify Google token: {str(ex)}",
+            )
+
+        email = id_info.get("email")
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Google token did not contain a valid email address.",
+            )
+        email = email.lower()
+        google_id = id_info.get("sub")
+        full_name = id_info.get("name") or email.split("@")[0]
+        avatar_url = id_info.get("picture")
+
+        # 1. Look up by google_id
+        user = None
+        if google_id:
+            user = await User.find_one(User.google_id == google_id)
+
+        # 2. If not found by google_id, look up by email
+        if not user:
+            user = await user_repo.get_by_email(email)
+
+        now = utc_now()
+        if user:
+            dirty = False
+            if not user.google_id and google_id:
+                user.google_id = google_id
+                dirty = True
+            if not user.avatar_url and avatar_url:
+                user.avatar_url = avatar_url
+                dirty = True
+            if not user.is_active:
+                user.is_active = True
+                user.otp = None
+                user.otp_expires_at = None
+                dirty = True
+            if dirty:
+                user.updated_at = now
+                await user_repo.save(user)
+        else:
+            new_user = User(
+                email=email,
+                full_name=full_name,
+                hashed_password=None,
+                is_active=True,
+                google_id=google_id,
+                avatar_url=avatar_url,
+                auth_provider="google",
+                created_at=now,
+                updated_at=now,
+            )
+            user = await user_repo.create(new_user)
 
         token = create_access_token(subject=str(user.id))
         return TokenResponse(

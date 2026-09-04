@@ -7,6 +7,7 @@ from app.schemas.auth import (
     ForgotPasswordRequest,
     ResetPasswordRequest,
     TokenResponse,
+    GoogleLoginRequest,
 )
 from app.schemas.user import UserResponse, UserUpdate
 from app.schemas.account import AccountCreate, AccountUpdate, AccountResponse
@@ -52,6 +53,7 @@ __all__ = [
     "ForgotPasswordRequest",
     "ResetPasswordRequest",
     "TokenResponse",
+    "GoogleLoginRequest",
     "UserResponse",
     "UserUpdate",
     "AccountCreate",
