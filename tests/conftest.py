@@ -34,6 +34,7 @@ from app.models.emi import EMI
 from app.models.transaction import Transaction
 from app.models.transaction_import import TransactionImport
 from app.models.user import User
+from app.models.monthly_plan import MonthlyPlan
 from app.main import app
 
 
@@ -68,6 +69,7 @@ async def init_mock_db():
             Transaction,
             EMI,
             TransactionImport,
+            MonthlyPlan,
         ],
     )
 
@@ -85,6 +87,7 @@ async def init_mock_db():
     await Transaction.delete_all()
     await EMI.delete_all()
     await TransactionImport.delete_all()
+    await MonthlyPlan.delete_all()
     settings.SMTP_ENABLED = orig_smtp
 
 

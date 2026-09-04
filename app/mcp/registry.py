@@ -2,17 +2,32 @@ import inspect
 import json
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, get_args, get_origin
+import types
+from typing import Any, Callable, Dict, List, Optional, Union, get_args, get_origin
 from fastapi import HTTPException
 from pydantic import BaseModel
 
 from app.mcp.context import user_context
+
+INTERNAL_PARAMS = {"user_id", "current_user", "user"}
 
 
 def _python_type_to_json_schema(py_type: Any) -> dict:
     """Converts a Python type annotation to JSON schema property definition."""
     origin = get_origin(py_type)
     args = get_args(py_type)
+
+    # Handle Optional[T] / Union[T, None] / T | None
+    if origin is Union or origin is getattr(types, "UnionType", None):
+        non_none = [a for a in args if a is not type(None) and a is not None]
+        if len(non_none) == 1:
+            inner_schema = _python_type_to_json_schema(non_none[0])
+            return {"anyOf": [inner_schema, {"type": "null"}]}
+        elif len(non_none) > 1:
+            return {
+                "anyOf": [_python_type_to_json_schema(a) for a in non_none]
+                + [{"type": "null"}]
+            }
 
     if origin is None:
         if py_type is str:
@@ -34,14 +49,6 @@ def _python_type_to_json_schema(py_type: Any) -> dict:
         else:
             return {"type": "string"}
 
-    # Handle Optional[T] / Union[T, None]
-    if origin is type(Optional[int]) or (hasattr(origin, "__name__") and origin.__name__ == "Union"):
-        non_none = [a for a in args if a is not type(None)]
-        if len(non_none) == 1:
-            schema = _python_type_to_json_schema(non_none[0])
-            schema["nullable"] = True
-            return schema
-
     # Handle List[T]
     if origin is list or origin is List:
         item_type = args[0] if args else str
@@ -57,13 +64,18 @@ def _build_parameters_schema(func: Callable) -> dict:
     """Extracts JSON Schema parameters definition from function signature."""
     sig = inspect.signature(func)
     doc = inspect.getdoc(func) or ""
-    
+
     properties = {}
     required = []
 
     for name, param in sig.parameters.items():
-        # Exclude internal/reserved parameters if any
-        annotation = param.annotation if param.annotation != inspect.Parameter.empty else str
+        # Exclude internal/reserved parameters injected by the system
+        if name in INTERNAL_PARAMS:
+            continue
+
+        annotation = (
+            param.annotation if param.annotation != inspect.Parameter.empty else str
+        )
         prop_schema = _python_type_to_json_schema(annotation)
 
         # Infer description from docstring if available (simple heuristic)
@@ -196,9 +208,9 @@ class ToolRegistry:
 
         args = arguments.copy() if arguments else {}
 
-        # If user_id is passed and function has user_id param but not passed in args, inject it
+        # Always inject the authenticated user_id if the function expects it
         sig = inspect.signature(tool.func)
-        if "user_id" in sig.parameters and "user_id" not in args and user_id:
+        if "user_id" in sig.parameters and user_id:
             args["user_id"] = user_id
 
         try:

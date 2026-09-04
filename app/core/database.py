@@ -10,6 +10,7 @@ from app.models.category import Category, CategoryType
 from app.models.transaction import Transaction
 from app.models.emi import EMI
 from app.models.transaction_import import TransactionImport
+from app.models.monthly_plan import MonthlyPlan
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,7 @@ async def init_db(client: AsyncMongoClient = None) -> AsyncMongoClient:
             Transaction,
             EMI,
             TransactionImport,
+            MonthlyPlan,
         ],
     )
     logger.info(f"Connected to MongoDB database: '{settings.DATABASE_NAME}' and initialized Beanie.")

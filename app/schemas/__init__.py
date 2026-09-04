@@ -29,6 +29,17 @@ from app.schemas.dashboard import (
     TimeSeriesDataPoint,
     CategoryBreakdownItem,
 )
+from app.schemas.monthly_plan import (
+    PlannedIncomeItemSchema,
+    CategoryBudgetItemSchema,
+    CustomPlanItemSchema,
+    MonthlyPlanCreate,
+    MonthlyPlanUpdate,
+    MonthlyPlanResponse,
+    CategoryComparisonItem,
+    MonthlyPlanComparisonResponse,
+    CopyPreviousMonthRequest,
+)
 
 __all__ = [
     "MessageResponse",
@@ -64,4 +75,13 @@ __all__ = [
     "AnalyticsResponse",
     "TimeSeriesDataPoint",
     "CategoryBreakdownItem",
+    "PlannedIncomeItemSchema",
+    "CategoryBudgetItemSchema",
+    "CustomPlanItemSchema",
+    "MonthlyPlanCreate",
+    "MonthlyPlanUpdate",
+    "MonthlyPlanResponse",
+    "CategoryComparisonItem",
+    "MonthlyPlanComparisonResponse",
+    "CopyPreviousMonthRequest",
 ]
